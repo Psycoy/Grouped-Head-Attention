@@ -1,0 +1,70 @@
+# one yaml config file for one sweep id
+# configure everything in this file
+
+name: 1
+description: "1"
+program: ./SweepRuns_exp_ajusted/headgroup_prune_iwsltende_2center/Run_Main.sh
+command:
+  - bash
+  - ./SweepRuns_exp_ajusted/headgroup_prune_iwsltende_2center/Run_Main.sh
+  - ${args}
+
+method: grid
+metric:
+  name: valid/best_bleu
+  goal: maximize
+parameters:
+  EFFICIENT_MULTIHEAD_ATTENTION: 
+    value: true
+  OPTIMIZER: 
+    value: 'adam'
+  CLIP_NORM: 
+    value: 0.0
+  LR: 
+    value: 5e-4
+  LR_SCHEDULER: 
+    value: 'inverse_sqrt'
+  WARMUP_UPDATES: 
+    value: 4000
+  DROPOUT: 
+    value: 0.3
+  WEIGHT_DECAY:
+    value: 0.0001
+  CRITERION: 
+    value: 'label_smoothed_cross_entropy_headclustering_prune'
+  LABEL_SMOOTHING: 
+    value: 0.1
+  _Supervise_mode:
+    value: "reconstruction"
+  _cluster_matrix:
+    value: "V"
+  _supervised_matrix:
+    value: "V"
+  _cluster_loss_coefficient_interclass:
+    values: [0.3, 0.5, 0.7, 1.0, 1.2, 0.1, 2.0]
+  _cluster_loss_coefficient_inclass:
+    values: [0.3, 0.5, 0.7, 1.0, 1.2, 0.1, 2.0]
+  _N_head_clusters:
+    value: 2
+  _debug_mode:
+    value: false
+  _use_interclass_loss:
+    value: true
+  _use_inclass_loss:
+    value: true
+  _use_efficient_en_de_attn:
+    value: true
+  _kmeans_distance_metric:
+    value: 'euclidean'
+  _epoch_start_to_prune:
+    value: 10
+  _need_prune:
+    value: false
+  _keep_updating_cluster:
+    value: false
+  _voting_to_prune:
+    value: true
+
+
+project: HeadCollab_ajusted
+
