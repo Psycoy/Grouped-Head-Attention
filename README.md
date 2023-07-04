@@ -1,7 +1,7 @@
 # ACL-2023-Grouped-Head-Attention
 
 
-Code for the paper Finding the Pillars of Strength for Multi-Head Attention, Jinjie Ni, Rui Mao, Zonglin Yang, Han Lei, and Erik Cambria.
+Code for the paper [<b>Finding the Pillars of Strength for Multi-Head Attention</b>](https://arxiv.org/abs/2305.14380), Jinjie Ni, Rui Mao, Zonglin Yang, Han Lei, and Erik Cambria.
 
 ## Requirements
 torch==1.9.0+cu111<br>
@@ -31,3 +31,28 @@ Notes:
 2. For users not using slurm clusters, you need to run `wandb agent #username_projectname_sweepid` (`#username_projectname_sweepid` is the variable in `SweepID.sh`).
 3. If you want to run on multiple GPUs (our experiments are mostly based on a single A100-80GB GPU), you need to configure the fairseq-train command in `Run_Main.sh` according to https://fairseq.readthedocs.io/en/latest/.
 4. More Sweep and W&B usage can be found at https://docs.wandb.ai/guide.
+
+
+
+If you use this code in your work then please cite the paper [<b>Finding the Pillars of Strength for Multi-Head Attention</b>](https://arxiv.org/abs/2305.14380) with the following:
+
+```
+@article{DBLP:journals/corr/abs-2305-14380,
+  author       = {Jinjie Ni and
+                  Rui Mao and
+                  Zonglin Yang and
+                  Han Lei and
+                  Erik Cambria},
+  title        = {Finding the Pillars of Strength for Multi-Head Attention},
+  journal      = {CoRR},
+  volume       = {abs/2305.14380},
+  year         = {2023},
+  url          = {https://doi.org/10.48550/arXiv.2305.14380},
+  doi          = {10.48550/arXiv.2305.14380},
+  eprinttype    = {arXiv},
+  eprint       = {2305.14380},
+  timestamp    = {Mon, 26 Jun 2023 20:50:08 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/abs-2305-14380.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
+}
+```
