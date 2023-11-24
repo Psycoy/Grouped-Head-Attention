@@ -93,7 +93,6 @@ for l in $src $tgt; do
 done
 
 echo "pre-processing valid data..."
-# Contatination of newstest2012 and newstest2013
 
 for l in $src $tgt; do
     for year in "2012" "2013"; do
@@ -130,11 +129,6 @@ for l in $src $tgt; do
     echo ""
 done
 
-# echo "splitting train and valid..."
-# for l in $src $tgt; do
-#     awk '{if (NR%1333 == 0)  print $0; }' $tmp/train.tags.$lang.tok.$l > $tmp/valid.$l
-#     awk '{if (NR%1333 != 0)  print $0; }' $tmp/train.tags.$lang.tok.$l > $tmp/train.$l
-# done
 
 TRAIN=$tmp/train.fr-en
 BPE_CODE=$prep/code
@@ -153,7 +147,6 @@ for L in $src $tgt; do
     done
 done
 
-# TODO: 按标准来clean data的长短和tgt/source ratio
 perl $CLEAN -ratio 1.5 $tmp/bpe.train $src $tgt $prep/train 1 250
 perl $CLEAN -ratio 1.5 $tmp/bpe.valid $src $tgt $prep/valid 1 250
 

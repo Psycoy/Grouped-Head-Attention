@@ -158,7 +158,6 @@ for L in $src $tgt; do
     done
 done
 
-# TODO: 按标准来clean data的长短和tgt/source ratio
 perl $CLEAN -ratio 1.5 $tmp/bpe.train $src $tgt $prep/train 1 250
 perl $CLEAN -ratio 1.5 $tmp/bpe.valid $src $tgt $prep/valid 1 250
 
