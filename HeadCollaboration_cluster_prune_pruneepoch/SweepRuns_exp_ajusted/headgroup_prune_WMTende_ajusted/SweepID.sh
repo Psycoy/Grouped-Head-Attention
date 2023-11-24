@@ -7,9 +7,9 @@
 
 # sbatch ./SweepRuns_exp_ajusted/headgroup_prune_WMTende_ajusted/Sbatch.sh
 
-Sweepid=ghd1nktd
-Projectname="HeadCollab_ajusted"
-username="olivernova"
+Sweepid=
+Projectname=
+username=
 username_projectname_sweepid="${username}/${Projectname}/${Sweepid}"
 
 #####################################################################################

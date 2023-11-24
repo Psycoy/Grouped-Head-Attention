@@ -451,9 +451,7 @@ class MultiheadAttention_efficient(nn.Module):
                 labels_attention_matrices, cluster_centers_attention_matrices = kmeans(attention_matrices_heads, num_clusters=self.cfg.N_head_clusters, seed=0, device=torch.device(attention_matrices_heads.device))
             head_matrices["cluster_centers_attention_matrices"] = [cluster_centers_attention_matrices]
             head_matrices["head_labels_attention_matrices"] = [labels_attention_matrices]
-            # try:
-            #     print(head_matrices["cluster_centers_attention_matrices"][0].device, head_matrices["head_labels_attention_matrices"][0].device, attention_matrices_heads.device)
-            # except Exception as e: print(e)
+
         assert v is not None
         attn = torch.bmm(attn_probs, v)
         assert list(attn.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]

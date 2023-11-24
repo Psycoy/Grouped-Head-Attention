@@ -143,13 +143,7 @@ class MultiheadAttention_efficient(nn.Module):
             nn.init.xavier_normal_(self.bias_k)
         if self.bias_v is not None:
             nn.init.xavier_normal_(self.bias_v)
-    
-    
-    '''每一个 matrix处调用computeandsort_distances_fromcenter， 
-    得到的prune_indicater append到总的prune_indicaters list，然后用finalize_prune_indicators得到最后的indicator，转为int。
-    选中所需要的head让其等于indicators中对应的数值。
-最后用attention script输入Fairseq cfg测试一下
-'''
+
     def computeandsort_distances_fromcenter(self, targets: Tensor, labels: Tensor, centers: Tensor, device, reservenum_each_center: int=1):
         # return the distance of each sample from its center, and the boolen array indicating which position shoud be pruned
         # targets: [h, dim], labels: [h, ], centers: [n, dim]
@@ -319,39 +313,6 @@ class MultiheadAttention_efficient(nn.Module):
                 assert value is not None
                 assert src_len, bsz == value.shape[:2]
 
-        # if (
-        #     not self.onnx_trace
-        #     and not is_tpu  # don't use PyTorch version on TPUs
-        #     and incremental_state is None
-        #     and not static_kv
-        #     # A workaround for quantization to work. Otherwise JIT compilation
-        #     # treats bias in linear module as method.
-        #     and not torch.jit.is_scripting()
-        # ):
-        #     assert key is not None and value is not None
-        #     return F.multi_head_attention_forward(
-        #         query,
-        #         key,
-        #         value,
-        #         self.embed_dim,
-        #         self.num_heads,
-        #         torch.empty([0]),
-        #         torch.cat((self.q_proj.bias, self.k_proj.bias, self.v_proj.bias)),
-        #         self.bias_k,
-        #         self.bias_v,
-        #         self.add_zero_attn,
-        #         self.dropout_module.p,
-        #         self.out_proj.weight,
-        #         self.out_proj.bias,
-        #         self.training or self.dropout_module.apply_during_inference,
-        #         key_padding_mask,
-        #         need_weights,
-        #         attn_mask,
-        #         use_separate_proj_weight=True,
-        #         q_proj_weight=self.q_proj.weight,
-        #         k_proj_weight=self.k_proj.weight,
-        #         v_proj_weight=self.v_proj.weight,
-        #     )
 
         if incremental_state is not None:
             saved_state = self._get_input_buffer(incremental_state)
@@ -583,13 +544,10 @@ class MultiheadAttention_efficient(nn.Module):
                 attention_matrices_heads = (attn_probs.contiguous()
                     .view(bsz, self.num_heads, tgt_len, src_len).contiguous().transpose(0,1).contiguous().view(self.num_heads, bsz * tgt_len * src_len)
                     )
-                # kmeans_attention_matrices = KMeans(n_clusters=self.cfg.N_head_clusters, random_state=0).fit(attention_matrices_heads)
                 labels_attention_matrices, cluster_centers_attention_matrices = kmeans(attention_matrices_heads, num_clusters=self.cfg.N_head_clusters, distance=self.cfg.kmeans_distance_metric, seed=0, device=torch.device(attention_matrices_heads.device))
                 head_matrices["cluster_centers_attention_matrices"] = [cluster_centers_attention_matrices]
                 head_matrices["head_labels_attention_matrices"] = [labels_attention_matrices]
-                # try:
-                #     print(head_matrices["cluster_centers_attention_matrices"].device, head_matrices["head_labels_attention_matrices"].device, attention_matrices_heads.device)
-                # except Exception as e: print(e)
+
                 if (self.need_prune or self.cfg.collecting_indicators) and (self.cfg.experiment_stage == 'train'):
                     _, prune_indicator = self.computeandsort_distances_fromcenter(attention_matrices_heads, labels_attention_matrices, cluster_centers_attention_matrices, device=torch.device(attention_matrices_heads.device), reservenum_each_center=1)
                     prune_indicaters.append(prune_indicator)
@@ -606,7 +564,7 @@ class MultiheadAttention_efficient(nn.Module):
                 headout_heads = (attn.contiguous()
                     .view(bsz, self.num_heads, tgt_len, self.head_dim).contiguous().transpose(0,1).contiguous().view(self.num_heads, bsz * tgt_len * self.head_dim)
                     )
-                # kmeans_headout = KMeans(n_clusters=self.cfg.N_head_clusters, random_state=0).fit(headout_heads)
+
                 labels_headout, cluster_centers_headout = kmeans(headout_heads, num_clusters=self.cfg.N_head_clusters, distance=self.cfg.kmeans_distance_metric, seed=0, device=torch.device(headout_heads.device))
                 head_matrices["cluster_centers_headout"] = [cluster_centers_headout]
                 head_matrices["head_labels_headout"] = [labels_headout]
@@ -614,10 +572,6 @@ class MultiheadAttention_efficient(nn.Module):
                 if (self.need_prune or self.cfg.collecting_indicators) and (self.cfg.experiment_stage == 'train'):
                     _, prune_indicator = self.computeandsort_distances_fromcenter(headout_heads, labels_headout, cluster_centers_headout, device=torch.device(headout_heads.device), reservenum_each_center=1)
                     prune_indicaters.append(prune_indicator)
-        #1. no need prune: 聚类。self.prune_indicator一直是None因为进不去下面的finalize_prune_indicators。这时候不管self.cfg.keep_updating_cluster是什么，都会执行聚类，计算并反向传播聚类的loss。
-        #2. need prune，self.prune_indicator is None：聚类，各类matrix的离心计算，finalize_prune_indicators计算。
-        #3. need prune，self.prune_indicator is not None, self.cfg.keep_updating_cluster is True: 聚类，各类matrix的离心计算，finalize_prune_indicators计算。
-        #4. need prune，self.prune_indicator is not None, self.cfg.keep_updating_cluster is False：Do nothing。会直接复用已经生成的self.prune_indicator，来执行下面的head masking。
         
         assert ~(self.cfg.collecting_indicators & self.need_prune), f"self.cfg.collecting_indicators: {self.cfg.collecting_indicators} and self.need_prune: {self.need_prune} cannot both be true."
         
@@ -651,12 +605,7 @@ class MultiheadAttention_efficient(nn.Module):
             attn = head_mask * attn
             attn = attn.contiguous().view(bsz * self.num_heads, tgt_len, self.head_dim)
             
-            # print(attn)
             
-            # print("supervise_device: ", head_matrices["headout_matrices_tobesupervised"][0].device, "cluster_centers_headout_device: ", head_matrices["cluster_centers_headout"][0].device)
-        # attn = self.Headwise_Attention(attn, self.cfg.HWA_head_num)   # [bsz * self.num_heads, tgt_len, self.head_dim]
-        # assert list(attn.size()) == [bsz * self.num_heads, tgt_len, self.head_dim]
-        # head_matrices["headout_matrices_afterHWA"] = [attn.contiguous().view(bsz, self.num_heads, tgt_len, self.head_dim)]
         if self.onnx_trace and attn.size(1) == 1:
             # when ONNX tracing a single decoder step (sequence length == 1)
             # the transpose is a no-op copy before view, thus unnecessary
