@@ -1,4 +1,4 @@
-# ACL'23 Grouped Head Attention
+# Grouped Head Attention
 
 
 Code for the paper [<b>Finding the Pillars of Strength for Multi-Head Attention</b>](https://arxiv.org/abs/2305.14380), Jinjie Ni, Rui Mao, Zonglin Yang, Han Lei, and Erik Cambria.
